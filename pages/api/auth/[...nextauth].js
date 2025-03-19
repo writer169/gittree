@@ -2,7 +2,6 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 
-// The allowed email address that can access your app
 const ALLOWED_EMAIL = process.env.ALLOWED_EMAIL;
 
 export default NextAuth({
@@ -14,10 +13,12 @@ export default NextAuth({
   ],
   callbacks: {
     async signIn({ user, account, profile }) {
+      console.log("signIn callback triggered. user:", user); // Добавили логи
       // Only allow a specific email to sign in
       return user.email === ALLOWED_EMAIL;
     },
     async session({ session, token }) {
+       console.log("session callback triggered. session", session); //Добавили логи
       // Add the user's email to the session for checking in components
       session.isAllowed = session.user.email === ALLOWED_EMAIL;
       return session;
