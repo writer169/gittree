@@ -1,8 +1,27 @@
 // pages/auth/signin.js
-import { getProviders, signIn } from "next-auth/react";
+import { getProviders, signIn, useSession } from "next-auth/react";
 import Head from 'next/head';
+import { useRouter } from 'next/router';
+import { useEffect } from 'react';
 
 export default function SignIn({ providers }) {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      const callbackUrl = router.query.callbackUrl || '/'; // Используем callbackUrl, если есть, иначе главная
+      router.push(callbackUrl);
+    }
+  }, [status, router]);
+
+
+  // Если сессия загружается, показываем индикатор загрузки
+  if (status === "loading") {
+    return <div style={{ padding: "40px", textAlign: "center" }}>Loading...</div>;
+  }
+
+
   return (
     <div style={{ padding: "40px", textAlign: "center" }}>
       <Head>
