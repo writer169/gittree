@@ -9,54 +9,56 @@ export default function Home() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const owner = 'writer169'; // Hardcoded owner
-  const [repo, setRepo] = useState(router.query.repo || 'gittree'); // Use router.query.repo
+  const [repo, setRepo] = useState(''); // Initialize repo
 
-  // Check authentication status
+  // Initialize repo from query params (do this ONCE, outside useEffect)
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push('/api/auth/signin');
-    }
-  }, [status, router]);
+      if (router.query.repo) {
+          setRepo(router.query.repo);
+      }
+  }, [router.query.repo]); // Only depend on router.query.repo
 
-  // Handle unauthorized user
-  if (status === "authenticated" && !session.isAllowed) {
-    return (
-      <div style={{ padding: "40px", textAlign: "center" }}>
-        <h1>Unauthorized Access</h1>
-        <p>You are not authorized to view this content.</p>
-        <button
-          onClick={() => signOut()}
-          style={{
-            padding: "10px 20px",
-            backgroundColor: "#f44336",
-            color: "white",
-            border: "none",
-            borderRadius: "4px",
-            cursor: "pointer",
-          }}
-        >
-          Sign Out
-        </button>
-      </div>
-    );
-  }
-
-  // Loading state
-  if (status === "loading" || status === "unauthenticated") {
-    return <div style={{ padding: "40px", textAlign: "center" }}>Loading...</div>;
-  }
 
   const handleSubmit = (event) => {
     event.preventDefault();
     router.push(`/?repo=${repo}`, undefined, { shallow: true }); // Only update repo
   };
 
-  useEffect(() => {
-    // Update state if query params change (e.g., via back/forward buttons)
-    if(router.query.repo) {
-      setRepo(router.query.repo)
+  // Handle redirection and unauthorized access *after* useSession
+  if (status === "loading") {
+    return <div style={{ padding: "40px", textAlign: "center" }}>Loading...</div>;
+  }
+
+  if (status === "unauthenticated") {
+      // Don't redirect immediately.  Render something, THEN redirect.
+      useEffect(() => {
+          router.push('/api/auth/signin');
+      }, [router]); // router is stable, no need to include status
+
+      return <div style={{ padding: "40px", textAlign: "center" }}>Redirecting to sign in...</div>;
+  }
+
+    if (status === "authenticated" && !session.isAllowed) {
+        return (
+            <div style={{ padding: "40px", textAlign: "center" }}>
+                <h1>Unauthorized Access</h1>
+                <p>You are not authorized to view this content.</p>
+                <button
+                    onClick={() => signOut()}
+                    style={{
+                        padding: "10px 20px",
+                        backgroundColor: "#f44336",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "4px",
+                        cursor: "pointer",
+                    }}
+                >
+                    Sign Out
+                </button>
+            </div>
+        );
     }
-  }, [router.query]);
 
   return (
     <div>
@@ -70,9 +72,11 @@ export default function Home() {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
           <h1>GitHub Repository Viewer</h1>
           <div>
-            <span style={{ marginRight: "10px" }}>
-              Signed in as {session.user.email}
-            </span>
+            {session && ( // Check if session exists before accessing user
+                <span style={{ marginRight: "10px" }}>
+                  Signed in as {session.user.email}
+                </span>
+            )}
             <button
               onClick={() => signOut()}
               style={{
@@ -88,7 +92,7 @@ export default function Home() {
             </button>
           </div>
         </div>
-        
+
         <p>Owner: {owner}</p>
         <form onSubmit={handleSubmit} style={{ marginBottom: "20px" }}>
           <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
@@ -101,7 +105,7 @@ export default function Home() {
               required
               style={{ padding: "8px", borderRadius: "4px", border: "1px solid #ddd" }}
             />
-            <button 
+            <button
               type="submit"
               style={{
                 padding: "8px 12px",
