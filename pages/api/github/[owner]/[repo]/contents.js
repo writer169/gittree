@@ -2,6 +2,7 @@
 import { Octokit } from "@octokit/rest";
 
 export default async function handler(req, res) {
+  console.log("API Route called:", req.query);
   const { owner, repo, path = "" } = req.query;  // Получаем параметры из запроса
   const githubToken = process.env.GITHUB_TOKEN;
 
