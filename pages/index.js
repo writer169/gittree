@@ -6,72 +6,44 @@ import { useRouter } from 'next/router';
 import { useSession, signIn, signOut } from "next-auth/react";
 
 export default function Home() {
-  console.log("Home component rendered"); // Лог при рендеринге компонента
-
   const router = useRouter();
   const { data: session, status } = useSession();
   const owner = 'writer169';
   const [repo, setRepo] = useState('');
 
-  console.log("useSession status:", status); // Лог статуса сессии
-  console.log("useSession session:", session); // Лог данных сессии
-
   useEffect(() => {
-      console.log("useEffect for initializing repo triggered. router.query:", router.query);
       if (router.query.repo) {
           setRepo(router.query.repo);
       }
   }, [router.query.repo]);
 
-
   const handleSubmit = (event) => {
     event.preventDefault();
-    console.log("handleSubmit triggered. repo:", repo);
     router.push(`/?repo=${repo}`, undefined, { shallow: true });
   };
 
+  // useEffect для редиректа - теперь он НАВЕРХУ
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push('/api/auth/signin');
+    }
+  }, [status, router]); // Зависимости: status и router
+
   if (status === "loading") {
-    console.log("Loading state");
     return <div style={{ padding: "40px", textAlign: "center" }}>Loading...</div>;
   }
 
-  if (status === "unauthenticated") {
-    useEffect(() => {
-      console.log("useEffect for redirect triggered. Status:", status);
-      router.push('/api/auth/signin');
-      // }, [router]); //  Закомментировал - первоначальная версия
-    }, [router, status]); // Временно добавили status для отладки
-
-    return <div style={{ padding: "40px", textAlign: "center" }}>Redirecting to sign in...</div>;
-  }
-
   if (status === "authenticated" && !session.isAllowed) {
-    console.log("Unauthorized access");
     return (
       <div style={{ padding: "40px", textAlign: "center" }}>
         <h1>Unauthorized Access</h1>
         <p>You are not authorized to view this content.</p>
-        <button
-          onClick={() => {
-            console.log("Sign Out button clicked");
-            signOut();
-          }}
-          style={{
-            padding: "10px 20px",
-            backgroundColor: "#f44336",
-            color: "white",
-            border: "none",
-            borderRadius: "4px",
-            cursor: "pointer",
-          }}
-        >
+        <button onClick={signOut} style={{ padding: "10px 20px", backgroundColor: "#f44336", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" }}>
           Sign Out
         </button>
       </div>
     );
   }
-
-  console.log("Rendering main content"); // Лог перед рендерингом основного содержимого
 
   return (
     <div>
@@ -90,20 +62,7 @@ export default function Home() {
                 Signed in as {session.user.email}
               </span>
             )}
-            <button
-              onClick={() => {
-                console.log("Sign Out button clicked");
-                signOut();
-              }}
-              style={{
-                padding: "8px 12px",
-                backgroundColor: "#f44336",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer",
-              }}
-            >
+            <button onClick={signOut} style={{ padding: "8px 12px", backgroundColor: "#f44336", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" }}>
               Sign Out
             </button>
           </div>
@@ -117,24 +76,11 @@ export default function Home() {
               type="text"
               id="repo"
               value={repo}
-              onChange={(e) => {
-                console.log("Repo input changed:", e.target.value);
-                setRepo(e.target.value);
-              }}
+              onChange={(e) => setRepo(e.target.value)}
               required
               style={{ padding: "8px", borderRadius: "4px", border: "1px solid #ddd" }}
             />
-            <button
-              type="submit"
-              style={{
-                padding: "8px 12px",
-                backgroundColor: "#4CAF50",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer",
-              }}
-            >
+            <button type="submit" style={{ padding: "8px 12px", backgroundColor: "#4CAF50", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" }}>
               View
             </button>
           </div>
