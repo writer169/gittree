@@ -1,0 +1,22 @@
+/* styles/Tree.module.css */
+.treeContainer {
+  font-family: sans-serif;
+}
+
+.treeContainer ul {
+  list-style: none;
+  padding-left: 20px;
+}
+
+.treeContainer li {
+  margin: 5px 0;
+}
+
+.folder {
+  cursor: pointer;
+  color: blue; /* Or any color you prefer */
+  text-decoration: underline;
+}
+.folder:hover{
+    color: darkblue;
+}
