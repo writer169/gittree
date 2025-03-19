@@ -20,3 +20,22 @@
 .folder:hover{
     color: darkblue;
 }
+
+.copyButton {
+    margin-bottom: 10px;
+    padding: 8px 12px;
+    background-color: #4CAF50; /* Green */
+    border: none;
+    color: white;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.copyButton:disabled {
+    background-color: #cccccc; /* Gray */
+    cursor: not-allowed;
+}
