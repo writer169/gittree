@@ -22,18 +22,19 @@ export default function Home() {
     router.push(`/?repo=${repo}`, undefined, { shallow: true });
   };
 
-  // useEffect для редиректа - теперь он НАВЕРХУ
   useEffect(() => {
+    console.log("useEffect for redirect triggered. Status:", status); // Добавили лог
     if (status === "unauthenticated") {
+      console.log("Redirecting to signin"); // Добавили лог
       router.push('/api/auth/signin');
     }
-  }, [status, router]); // Зависимости: status и router
+  }, [status, router]);
 
   if (status === "loading") {
     return <div style={{ padding: "40px", textAlign: "center" }}>Loading...</div>;
   }
 
-  if (status === "authenticated" && !session.isAllowed) {
+  if (status === "authenticated" && !session?.isAllowed) { // Исправил проверку session
     return (
       <div style={{ padding: "40px", textAlign: "center" }}>
         <h1>Unauthorized Access</h1>
