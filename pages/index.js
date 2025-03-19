@@ -1,16 +1,34 @@
 // pages/index.js
 import Head from 'next/head';
 import Tree from '../components/Tree';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router'; // Import useRouter
 
 export default function Home() {
-    const [owner, setOwner] = useState('facebook'); // Default owner
-    const [repo, setRepo] = useState('react');   // Default repository
+    const router = useRouter(); // Use useRouter hook
+
+    // Get owner and repo from query parameters, or use defaults
+    const [owner, setOwner] = useState(router.query.owner || 'facebook');
+    const [repo, setRepo] = useState(router.query.repo || 'react');
+
 
     const handleSubmit = (event) => {
         event.preventDefault();
-        // You could add validation here to check if owner and repo are valid.
+        // Update the URL with the new owner and repo
+        router.push(`/?owner=${owner}&repo=${repo}`, undefined, { shallow: true });
+
     };
+
+    useEffect(() => {
+      // Update state if query params change (e.g., via back/forward buttons)
+       if(router.query.owner) {
+           setOwner(router.query.owner)
+       }
+       if(router.query.repo) {
+         setRepo(router.query.repo)
+       }
+    }, [router.query])
+
 
   return (
     <div>
@@ -43,7 +61,7 @@ export default function Home() {
                     required
                   />
               </div>
-                {/*  No submit button needed, changes are live */}
+              <button type='submit'>View</button>
           </form>
 
         <Tree owner={owner} repo={repo} />
