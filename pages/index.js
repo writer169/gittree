@@ -10,22 +10,53 @@ export default function Home() {
   const { data: session, status } = useSession();
   const owner = 'writer169';
   const [repo, setRepo] = useState('');
+  const [repos, setRepos] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-      if (router.query.repo) {
-          setRepo(router.query.repo);
-      }
+    if (router.query.repo) {
+      setRepo(router.query.repo);
+    }
   }, [router.query.repo]);
+
+  // Загрузка списка репозиториев при монтировании компонента
+  useEffect(() => {
+    if (status === "authenticated" && session?.isAllowed) {
+      fetchRepos();
+    }
+  }, [status, session]);
+
+  const fetchRepos = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/github/repos?owner=${owner}`);
+      if (response.ok) {
+        const data = await response.json();
+        setRepos(data);
+      } else {
+        console.error("Failed to fetch repositories");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = (event) => {
     event.preventDefault();
     router.push(`/?repo=${repo}`, undefined, { shallow: true });
   };
 
+  const handleRepoClick = (repoName) => {
+    setRepo(repoName);
+    router.push(`/?repo=${repoName}`, undefined, { shallow: true });
+  };
+
   useEffect(() => {
-    console.log("useEffect for redirect triggered. Status:", status); // Добавили лог
+    console.log("useEffect for redirect triggered. Status:", status);
     if (status === "unauthenticated") {
-      console.log("Redirecting to signin"); // Добавили лог
+      console.log("Redirecting to signin");
       router.push('/api/auth/signin');
     }
   }, [status, router]);
@@ -34,7 +65,7 @@ export default function Home() {
     return <div style={{ padding: "40px", textAlign: "center" }}>Loading...</div>;
   }
 
-  if (status === "authenticated" && !session?.isAllowed) { // Исправил проверку session
+  if (status === "authenticated" && !session?.isAllowed) {
     return (
       <div style={{ padding: "40px", textAlign: "center" }}>
         <h1>Unauthorized Access</h1>
@@ -87,7 +118,42 @@ export default function Home() {
           </div>
         </form>
 
-        <Tree owner={owner} repo={repo} />
+        {/* Список репозиториев */}
+        <div style={{ marginBottom: "20px" }}>
+          <h2>Repositories</h2>
+          {loading ? (
+            <p>Loading repositories...</p>
+          ) : repos.length > 0 ? (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))", gap: "15px" }}>
+              {repos.map(repo => (
+                <div 
+                  key={repo.id} 
+                  style={{ 
+                    border: "1px solid #ddd", 
+                    padding: "15px", 
+                    borderRadius: "8px",
+                    cursor: "pointer",
+                    transition: "background-color 0.2s",
+                    backgroundColor: repo.name === router.query.repo ? "#e6ffe6" : "white" 
+                  }}
+                  onClick={() => handleRepoClick(repo.name)}
+                >
+                  <h3 style={{ margin: "0 0 8px 0" }}>{repo.name}</h3>
+                  <p style={{ margin: "0 0 8px 0", fontSize: "14px", color: "#666", minHeight: "40px" }}>
+                    {repo.description || "No description"}
+                  </p>
+                  <p style={{ margin: "0", fontSize: "12px", color: "#999" }}>
+                    Updated: {new Date(repo.updated_at).toLocaleDateString()}
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p>No repositories found.</p>
+          )}
+        </div>
+
+        {repo && <Tree owner={owner} repo={repo} />}
       </main>
     </div>
   );
