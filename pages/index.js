@@ -29,7 +29,7 @@ export default function Home() {
   const fetchRepos = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/github/repos?owner=${owner}`);
+      const response = await fetch(`/api/github/repos`);
       if (response.ok) {
         const data = await response.json();
         setRepos(data);
@@ -139,12 +139,29 @@ export default function Home() {
                   onClick={() => handleRepoClick(repo.name)}
                 >
                   <h3 style={{ margin: "0 0 8px 0" }}>{repo.name}</h3>
+                  <p style={{ margin: "0 0 5px 0", fontSize: "13px", color: "#555" }}>
+                    Owner: {repo.owner}
+                  </p>
                   <p style={{ margin: "0 0 8px 0", fontSize: "14px", color: "#666", minHeight: "40px" }}>
                     {repo.description || "No description"}
                   </p>
-                  <p style={{ margin: "0", fontSize: "12px", color: "#999" }}>
-                    Updated: {new Date(repo.updated_at).toLocaleDateString()}
-                  </p>
+                  <div style={{ 
+                    display: "flex", 
+                    justifyContent: "space-between",
+                    alignItems: "center", 
+                    fontSize: "12px", 
+                    color: "#999" 
+                  }}>
+                    <span>Updated: {new Date(repo.updated_at).toLocaleDateString()}</span>
+                    <span style={{ 
+                      backgroundColor: repo.private ? "#ffe6e6" : "#e6ffe6", 
+                      padding: "2px 6px", 
+                      borderRadius: "4px",
+                      color: repo.private ? "#cc0000" : "#007700"
+                    }}>
+                      {repo.private ? "Private" : "Public"}
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>
