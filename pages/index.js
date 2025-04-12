@@ -19,7 +19,7 @@ export default function Home() {
     }
   }, [router.query.repo]);
 
-  // Загрузка списка репозиториев при монтировании компонента
+  // Загрузка списка репозиториев только для авторизованных пользователей
   useEffect(() => {
     if (status === "authenticated" && session?.isAllowed) {
       fetchRepos();
@@ -57,11 +57,15 @@ export default function Home() {
     console.log("useEffect for redirect triggered. Status:", status);
     if (status === "unauthenticated") {
       console.log("Redirecting to signin");
-      router.push('/api/auth/signin');
+      // Добавляем редирект с callbackUrl, чтобы вернуться на ту же страницу после авторизации
+      const callbackUrl = router.asPath;
+      router.push(`/api/auth/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`);
+      return; // Важно добавить return, чтобы остановить дальнейшее выполнение
     }
   }, [status, router]);
 
-  if (status === "loading") {
+  // Не отображаем контент, пока идет проверка аутентификации или пользователь не авторизован
+  if (status === "loading" || status === "unauthenticated") {
     return <div style={{ padding: "40px", textAlign: "center" }}>Loading...</div>;
   }
 
@@ -124,53 +128,72 @@ export default function Home() {
           {loading ? (
             <p>Loading repositories...</p>
           ) : repos.length > 0 ? (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))", gap: "15px" }}>
-              {repos.map(repo => (
-                <div 
-                  key={repo.id} 
-                  style={{ 
-                    border: "1px solid #ddd", 
-                    padding: "15px", 
-                    borderRadius: "8px",
-                    cursor: "pointer",
-                    transition: "background-color 0.2s",
-                    backgroundColor: repo.name === router.query.repo ? "#e6ffe6" : "white" 
-                  }}
-                  onClick={() => handleRepoClick(repo.name)}
-                >
-                  <h3 style={{ margin: "0 0 8px 0" }}>{repo.name}</h3>
-                  <p style={{ margin: "0 0 5px 0", fontSize: "13px", color: "#555" }}>
-                    Owner: {repo.owner}
-                  </p>
-                  <p style={{ margin: "0 0 8px 0", fontSize: "14px", color: "#666", minHeight: "40px" }}>
-                    {repo.description || "No description"}
-                  </p>
-                  <div style={{ 
-                    display: "flex", 
-                    justifyContent: "space-between",
-                    alignItems: "center", 
-                    fontSize: "12px", 
-                    color: "#999" 
-                  }}>
-                    <span>Updated: {new Date(repo.updated_at).toLocaleDateString()}</span>
-                    <span style={{ 
-                      backgroundColor: repo.private ? "#ffe6e6" : "#e6ffe6", 
-                      padding: "2px 6px", 
-                      borderRadius: "4px",
-                      color: repo.private ? "#cc0000" : "#007700"
-                    }}>
-                      {repo.private ? "Private" : "Public"}
-                    </span>
+            <div>
+              {repos.map(repoItem => {
+                const isSelected = repoItem.name === repo;
+                return (
+                  <div key={repoItem.id}>
+                    <div 
+                      style={{ 
+                        border: "1px solid #ddd", 
+                        padding: "15px", 
+                        borderRadius: isSelected ? "8px 8px 0 0" : "8px",
+                        cursor: "pointer",
+                        transition: "background-color 0.2s",
+                        backgroundColor: isSelected ? "#e6ffe6" : "white",
+                        marginBottom: isSelected ? 0 : "15px"
+                      }}
+                      onClick={() => handleRepoClick(repoItem.name)}
+                    >
+                      <h3 style={{ margin: "0 0 8px 0" }}>{repoItem.name}</h3>
+                      <p style={{ margin: "0 0 5px 0", fontSize: "13px", color: "#555" }}>
+                        Owner: {repoItem.owner}
+                      </p>
+                      <p style={{ margin: "0 0 8px 0", fontSize: "14px", color: "#666", minHeight: "40px" }}>
+                        {repoItem.description || "No description"}
+                      </p>
+                      <div style={{ 
+                        display: "flex", 
+                        justifyContent: "space-between",
+                        alignItems: "center", 
+                        fontSize: "12px", 
+                        color: "#999" 
+                      }}>
+                        <span>Updated: {new Date(repoItem.updated_at).toLocaleDateString()}</span>
+                        <span style={{ 
+                          backgroundColor: repoItem.private ? "#ffe6e6" : "#e6ffe6", 
+                          padding: "2px 6px", 
+                          borderRadius: "4px",
+                          color: repoItem.private ? "#cc0000" : "#007700"
+                        }}>
+                          {repoItem.private ? "Private" : "Public"}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    {/* Показываем дерево непосредственно под выбранной карточкой */}
+                    {isSelected && (
+                      <div 
+                        style={{ 
+                          border: "1px solid #ddd", 
+                          borderTop: "none", 
+                          padding: "15px", 
+                          borderRadius: "0 0 8px 8px", 
+                          marginBottom: "15px",
+                          backgroundColor: "#f9f9f9"
+                        }}
+                      >
+                        <Tree owner={owner} repo={repoItem.name} />
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <p>No repositories found.</p>
           )}
         </div>
-
-        {repo && <Tree owner={owner} repo={repo} />}
       </main>
     </div>
   );
